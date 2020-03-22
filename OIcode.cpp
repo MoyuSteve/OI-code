@@ -1,25 +1,31 @@
-#include<iostream>
-#include<algorithm>
+#include<stdio.h>
 #define int long long
-using namespace std;
-const int mod = 10007;
-int pow(int a, int x)
+
+const int N = 3000;
+int c[N][N];
+int s[N][N];
+signed main()
 {
-	int r = 1;
-	while (x)
-	{
-		if (x & 1)r = r * a % mod;
-		a = a * a % mod; x >>= 1;
-	}
-	return r;
-}
-signed main(void)
-{
-	int a, b, k, n, m;
-	cin >> a >> b >> k >> n >> m;
-	int r = pow(a, n) * pow(b, m) % mod;
-	for (int i = 1, j = k; i <= n; i++, j--)
-		r = r * j % mod, r = r * pow(i, mod - 2) % mod;
-	cout << r;
-	return 0;
+    int T,k;
+    scanf("%lld%lld",&T,&k);
+    for(int i = 0;i < N;i++)
+        for(int j = 0;j<=i;j++)
+        {
+            if (!j)c[i][j] = 1;
+            else c[i][j] = (c[i - 1][j] + c[i - 1][j - 1]) % k;
+            if(!c[i][j]) s[i][j] = 1;
+        }
+    for(int i = 0;i < N;i++)
+        for(int j = 0;j < N;j++)
+        {
+            if(i)s[i][j] += s[i-1][j];
+            if(j)s[i][j] += s[i][j-1];
+            if(i&&j)s[i][j] -= s[i-1][j-1];
+        }
+    while(T--)
+    {
+        int n,m;
+        scanf("%lld%lld",&n,&m);
+        printf("%lld",s[n][m]);
+    }
 }
