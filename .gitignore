@@ -1,5 +1,6 @@
 OICode.exe
 OICode
+/.vscode/
 **/build
 **/debug
 **/releases
@@ -39,5 +40,6 @@ OICode
 *.out
 *.app
 
+# del PE file
 
 RemoteWorking/t2
