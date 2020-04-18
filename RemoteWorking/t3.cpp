@@ -32,7 +32,7 @@ H
 2
 【数据规模】
 对于100%的数据：1<=N<=2500
-使用dp[i][j]表示i里放j个，从第一个到目前需要的
+使用dp[i][j]表示i里放j个，从第一个到目前需要的车辆数。
 */
 #include<iostream>
 #include<algorithm>
