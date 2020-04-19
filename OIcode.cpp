@@ -1,79 +1,146 @@
-// then 传染病控制 in https://www.nowcoder.com/study/live/249/7/2
+// then 第4节 Mayan游戏  in https://www.nowcoder.com/study/live/249/7/4
 //做法：暴力做法
 
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <algorithm>
-#include <vector>
  
 using namespace std;
  
-const int N = 310, M = N * 2;
+int n;
+int g[5][7], bg[5][5][7];
+int cnt[11], bcnt[5][11];
+bool st[5][7];
  
-int n, m;
-int head[N], e[M], c[M], nxt[M], cnt;
-int sum[N];
-vector<int> level[N];
-int ans = N;
+struct Move
+{
+    int x, y, d;
+}path[5];
  
-void add(int a, int b)
+void out()
 {
-    e[cnt] = b, nxt[cnt] = head[a], head[a] = cnt++;
-}
-int dfs1(int u, int depth, int father)
-{
-    sum[u] = 1;
-    for (int i = head[u]; ~i; i = nxt[i])
+    for (int y = 6; y >= 0; y--)
     {
-        int j = e[i];
-        if (j != father)
-        {
-            level[depth].push_back(i);
-            sum[u] += dfs1(j, depth + 1, u);
-        }
+        for (int x = 0; x < 5; x++) printf("%d ", g[x][y]);
+        puts("");
     }
-    return sum[u];
+    puts("");
 }
  
-void dfs3(int i, int color)
+void move(int a, int b, int c)
 {
-    c[i] = color;
-    for (int j = head[e[i]]; ~j; j = nxt[j])
-        if (j != (i ^ 1))
-            dfs3(j, color);
-}
+    swap(g[a][b], g[c][b]);
  
-void dfs2(int u, int s)
-{
-    ans = min(ans, s);
- 
-    if (level[u].empty()) return;
- 
-    for (int j = 0; j < level[u].size(); j++)
+    while (true)
     {
-        int i = level[u][j];
-        if (!c[i])
+        bool flag = false;
+         
+        for (int x = 0; x < 5; x++)
         {
-            dfs3(i, 1);
-            dfs2(u + 1, s - sum[e[i]]);
-            dfs3(i, 0);
+            int z = 0;
+            for (int y = 0; y < 7; y++)
+                if (g[x][y])
+                    g[x][z++] = g[x][y];
+            while (z < 7) g[x][z++] = 0;
         }
+ 
+        memset(st, false, sizeof st);
+        for (int x = 0; x < 5; x ++ )
+            for (int y = 0; y < 7; y ++ )
+                if (g[x][y])
+                {
+                    int l = x, r = x;
+                    while (l - 1 >= 0 && g[l - 1][y] == g[x][y]) l--;
+                    while (r + 1 < 5 && g[r + 1][y] == g[x][y]) r++;
+ 
+                    if (r - l + 1 >= 3)
+                    {
+                        flag = true;
+                        st[x][y] = true;
+                    }
+                    else
+                    {
+                        l = r = y;
+                        while (l - 1 >= 0 && g[x][l - 1] == g[x][y]) l--;
+                        while (r + 1 < 7 && g[x][r + 1] == g[x][y]) r++;
+ 
+                        if (r - l + 1 >= 3)
+                        {
+                            flag = true;
+                            st[x][y] = true;
+                        }
+                    }
+                }
+ 
+        if (flag)
+        {
+            for (int x = 0; x < 5; x ++ )
+                for (int y = 0; y < 7; y ++ )
+                    if (st[x][y])
+                    {
+                        cnt[0] --;
+                        cnt[g[x][y]] --;
+                        g[x][y] = 0;
+                    }
+        }
+        else break;
     }
+}
+ 
+bool dfs(int u)
+{
+    if (u == n) return !cnt[0];
+ 
+    for (int i = 1; i <= 10; i++)
+        if (cnt[i] == 1 || cnt[i] == 2)
+            return false;
+ 
+    memcpy(bg[u], g, sizeof g);
+    memcpy(bcnt[u], cnt, sizeof cnt);
+    for (int x = 0; x < 5; x ++ )
+        for (int y = 0; y < 7; y ++ )
+            if (g[x][y])
+            {
+                int nx = x + 1;
+                if (nx < 5)
+                {
+                    path[u] = { x, y, 1 };
+                    move(x, y, nx);
+                    if (dfs(u + 1)) return true;
+                    memcpy(g, bg[u], sizeof g);
+                    memcpy(cnt, bcnt[u], sizeof cnt);
+                }
+                nx = x - 1;
+                if (nx >= 0 && !g[nx][y])
+                {
+                    path[u] = { x, y, -1 };
+                    move(x, y, nx);
+                    if (dfs(u + 1)) return true;
+                    memcpy(g, bg[u], sizeof g);
+                    memcpy(cnt, bcnt[u], sizeof cnt);
+                }
+            }
+ 
+    return false;
 }
  
 int main()
 {
-    scanf("%d%d", &n, &m);
-    memset(head, -1, sizeof head);
-    for (int i = 0; i < m; i++)
+    cin >> n;
+    for (int i = 0; i < 5; i++)
     {
-        int a, b;
-        scanf("%d%d", &a, &b);
-        add(a, b), add(b, a);
+        int j = 0, y;
+        while (cin >> y, y)
+        {
+            cnt[0] ++;
+            cnt[y] ++;
+            g[i][j++] = y;
+        }
     }
-    dfs1(1, 0, -1);
-    dfs2(0, n);
-    printf("%d\n", ans);
+ 
+    if (dfs(0)) for (int i = 0; i < n; i++) printf("%d %d %d\n", path[i].x, path[i].y, path[i].d);
+    else puts("-1");
+ 
     return 0;
 }
