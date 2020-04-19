@@ -1,0 +1,1 @@
+'C:\Users:\凌海逸\scoop\apps\gcc\current\bin\g++.exe' $args[0] -o $args[0].Substring(0,$args[0].indexOf('.'))
