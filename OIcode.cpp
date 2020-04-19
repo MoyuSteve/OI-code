@@ -1,146 +1,111 @@
-// then 第4节 Mayan游戏  in https://www.nowcoder.com/study/live/249/7/4
-//做法：暴力做法
+// then 第4节 靶形数独  in https://www.nowcoder.com/study/live/249/7/2
 
-#include <cstdio>
-#include <cstring>
 #include <iostream>
 #include <algorithm>
  
 using namespace std;
  
-int n;
-int g[5][7], bg[5][5][7];
-int cnt[11], bcnt[5][11];
-bool st[5][7];
+const int N = 9, M = 1 << N;
  
-struct Move
-{
-    int x, y, d;
-}path[5];
+int ones[M], map[M];
+int row[N], col[N], cell[3][3];
+int g[N][N];
+int ans = -1;
  
-void out()
+inline int lowbit(int x)
 {
-    for (int y = 6; y >= 0; y--)
-    {
-        for (int x = 0; x < 5; x++) printf("%d ", g[x][y]);
-        puts("");
-    }
-    puts("");
+    return x & -x;
 }
  
-void move(int a, int b, int c)
+void init()
 {
-    swap(g[a][b], g[c][b]);
+    for (int i = 0; i < N; i++) map[1 << i] = i;
+    for (int i = 0; i < M; i++)
+        for (int j = i; j; j -= lowbit(j))
+            ones[i] ++;
  
-    while (true)
-    {
-        bool flag = false;
-         
-        for (int x = 0; x < 5; x++)
-        {
-            int z = 0;
-            for (int y = 0; y < 7; y++)
-                if (g[x][y])
-                    g[x][z++] = g[x][y];
-            while (z < 7) g[x][z++] = 0;
-        }
- 
-        memset(st, false, sizeof st);
-        for (int x = 0; x < 5; x ++ )
-            for (int y = 0; y < 7; y ++ )
-                if (g[x][y])
-                {
-                    int l = x, r = x;
-                    while (l - 1 >= 0 && g[l - 1][y] == g[x][y]) l--;
-                    while (r + 1 < 5 && g[r + 1][y] == g[x][y]) r++;
- 
-                    if (r - l + 1 >= 3)
-                    {
-                        flag = true;
-                        st[x][y] = true;
-                    }
-                    else
-                    {
-                        l = r = y;
-                        while (l - 1 >= 0 && g[x][l - 1] == g[x][y]) l--;
-                        while (r + 1 < 7 && g[x][r + 1] == g[x][y]) r++;
- 
-                        if (r - l + 1 >= 3)
-                        {
-                            flag = true;
-                            st[x][y] = true;
-                        }
-                    }
-                }
- 
-        if (flag)
-        {
-            for (int x = 0; x < 5; x ++ )
-                for (int y = 0; y < 7; y ++ )
-                    if (st[x][y])
-                    {
-                        cnt[0] --;
-                        cnt[g[x][y]] --;
-                        g[x][y] = 0;
-                    }
-        }
-        else break;
-    }
+    for (int i = 0; i < 9; i++) row[i] = col[i] = cell[i / 3][i % 3] = M - 1;
 }
  
-bool dfs(int u)
+inline int get_score(int x, int y, int t)
 {
-    if (u == n) return !cnt[0];
+    return (min(min(x, 8 - x), min(y, 8 - y)) + 6) * t;
+}
  
-    for (int i = 1; i <= 10; i++)
-        if (cnt[i] == 1 || cnt[i] == 2)
-            return false;
+inline void draw(int x, int y, int t)
+{
+    int s = 1;
+    if (t > 0) g[x][y] = t;
+    else
+    {
+        s = -1;
+        t = -t;
+        g[x][y] = 0;
+    }
+     
+    t--;
+    row[x] -= (1 << t) * s;
+    col[y] -= (1 << t) * s;
+    cell[x / 3][y / 3] -= (1 << t) * s;
+}
  
-    memcpy(bg[u], g, sizeof g);
-    memcpy(bcnt[u], cnt, sizeof cnt);
-    for (int x = 0; x < 5; x ++ )
-        for (int y = 0; y < 7; y ++ )
-            if (g[x][y])
+inline int get(int x, int y)
+{
+    return row[x] & col[y] & cell[x / 3][y / 3];
+}
+ 
+void dfs(int cnt, int score)
+{
+    if (!cnt)
+    {
+        ans = max(ans, score);
+        return;
+    }
+ 
+    int minv = 10;
+    int x, y;
+    for (int i = 0; i < N; i ++ )
+        for (int j = 0; j < N; j ++ )
+            if (!g[i][j])
             {
-                int nx = x + 1;
-                if (nx < 5)
+                int t = ones[get(i, j)];
+                if (t < minv)
                 {
-                    path[u] = { x, y, 1 };
-                    move(x, y, nx);
-                    if (dfs(u + 1)) return true;
-                    memcpy(g, bg[u], sizeof g);
-                    memcpy(cnt, bcnt[u], sizeof cnt);
-                }
-                nx = x - 1;
-                if (nx >= 0 && !g[nx][y])
-                {
-                    path[u] = { x, y, -1 };
-                    move(x, y, nx);
-                    if (dfs(u + 1)) return true;
-                    memcpy(g, bg[u], sizeof g);
-                    memcpy(cnt, bcnt[u], sizeof cnt);
+                    minv = ones[get(i, j)];
+                    x = i, y = j;
                 }
             }
- 
-    return false;
+     
+    for (int i = get(x, y); i; i -= lowbit(i))
+    {
+        int t = map[lowbit(i)] + 1;
+        draw(x, y, t);
+        dfs(cnt - 1, score + get_score(x, y, t));
+        draw(x, y, -t);
+    }
 }
  
 int main()
 {
-    cin >> n;
-    for (int i = 0; i < 5; i++)
-    {
-        int j = 0, y;
-        while (cin >> y, y)
-        {
-            cnt[0] ++;
-            cnt[y] ++;
-            g[i][j++] = y;
-        }
-    }
+    init();
  
-    if (dfs(0)) for (int i = 0; i < n; i++) printf("%d %d %d\n", path[i].x, path[i].y, path[i].d);
-    else puts("-1");
+    int cnt = 0, score = 0;
+    for (int i = 0; i < N; i ++ )
+        for (int j = 0; j < N; j++)
+        {
+            int x;
+            cin >> x;
+            if (x)
+            {
+                draw(i, j, x);
+                score += get_score(i, j, x);
+            }
+            else cnt++;
+        }
+     
+    dfs(cnt, score);
+ 
+    cout << ans << endl;
  
     return 0;
 }
